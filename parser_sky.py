@@ -5,7 +5,7 @@ url = 'https://www.networkworld.com/'
 
 
 news_network = []
-def get_network_world():
+def parser():
 
     response = requests.get(url).text
     soup = BeautifulSoup(response, 'lxml')
@@ -15,9 +15,7 @@ def get_network_world():
 
     for item in posts:
         date = {'title': item.get_text(strip=True),
-                 'link': f'{url} item["href"]'}
+                 'link': url + item['href']}
         news_network.append(date)
-
-
 
 get_network_world()
