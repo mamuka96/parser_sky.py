@@ -2,17 +2,18 @@ import telebot
 import requests
 from bs4 import BeautifulSoup
 import time
+import parser_sky
 
 token = '2065382655:AAGBGh1tAz68DJXfYu3j8z2zbKT90YRGdY8'
-id_channel = '@sky_footboll'
+chat_id = '@sky_footboll'
 bot = telebot.TeleBot(token)
 
 @bot.message_handler(content_types=['text'])
 def commands(message):
     back_post_id = 0
-    while True:
-        post_text = parser(back_post_id)
-        bot.send_message(id_channel, message.text)
+    # while True:
+    #     post_text = parser(back_post_id)
+    bot.send_message(chat_id, message.text)
 
 bot.polling()
 
@@ -28,10 +29,18 @@ def parser(back_post_id):
     if posts_id != back_post_id:
         for item in posts:
             date = {'title': item.get_text(strip=True),
-                     'link': url + item['href']}
+                    'link': url + item['href']}
             news_network.append(date)
         return news_network
     else:
         return None, posts_id
 
-parser()
+def send_parser(news_network, token, chat_id):
+    ur = 'https://api.telegram.org/bot{}/send_parser'.format(token)
+    data = {'chat_id': chat_id, 'caption': 'Result of parsing'}
+    files = news_network
+    response = requests.post(ur, data=data, files=files)
+    print(response)
+
+parser(142536)
+send_parser(news_network, token, chat_id)

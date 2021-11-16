@@ -18,4 +18,4 @@ def parser():
                  'link': url + item['href']}
         news_network.append(date)
 
-get_network_world()
+parser()
