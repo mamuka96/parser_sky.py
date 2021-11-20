@@ -1,46 +1,55 @@
-import telebot
 import requests
 from bs4 import BeautifulSoup
+from aiogram import Bot, Dispatcher, executor, types
+from config import TOKEN
+import json
 import time
-import parser_sky
 
-token = '2065382655:AAGBGh1tAz68DJXfYu3j8z2zbKT90YRGdY8'
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
 chat_id = '@sky_footboll'
-bot = telebot.TeleBot(token)
-
-@bot.message_handler(content_types=['text'])
-def commands(message):
-    back_post_id = 0
-    # while True:
-    #     post_text = parser(back_post_id)
-    bot.send_message(chat_id, message.text)
-
-bot.polling()
-
 url = 'https://www.networkworld.com/'
 news_network = []
-def parser(back_post_id):
+OUT_FILENAME = 'out.json'
 
+
+def parser():
     response = requests.get(url).text
     soup = BeautifulSoup(response, 'lxml')
 
-    posts = soup.find_all('a', class_='item-text', id=True)
-    posts_id = id(posts)
-    if posts_id != back_post_id:
-        for item in posts:
-            date = {'title': item.get_text(strip=True),
-                    'link': url + item['href']}
-            news_network.append(date)
-        return news_network
-    else:
-        return None, posts_id
+    posts = soup.find_all('a', class_='item-text')
 
-def send_parser(news_network, token, chat_id):
-    ur = 'https://api.telegram.org/bot{}/send_parser'.format(token)
-    data = {'chat_id': chat_id, 'caption': 'Result of parsing'}
-    files = news_network
-    response = requests.post(ur, data=data, files=files)
-    print(response)
+    for item in posts:
+        date = {'title': item.get_text(strip=True),
+                'link': url + item['href']}
 
-parser(142536)
-send_parser(news_network, token, chat_id)
+        with open(OUT_FILENAME, 'w') as f:
+            json.dump(news_network, f, indent=1)
+
+            for key in date.keys():
+                date[key] = date[key].replace('\n', '')
+                date[key] = date[key].replace('\t', '')
+        news_network.append(date)
+
+parser()
+
+def ttime():
+    parser()
+    while True:
+        time.sleep(5)
+ttime()
+
+
+
+
+
+@dp.message_handler(commands=['get_news'])
+async def send_file(message: types.Message):
+    with open('out.json') as file:
+        news_network = json.load(file)
+        await message.answer(news_network)
+
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
+
